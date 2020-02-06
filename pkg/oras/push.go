@@ -18,8 +18,8 @@ func Push(ctx context.Context, resolver remotes.Resolver, ref string, provider c
 	if resolver == nil {
 		return ocispec.Descriptor{}, ErrResolverUndefined
 	}
-	if len(descriptors) == 0 {
-		return ocispec.Descriptor{}, ErrEmptyDescriptors
+	if len(descriptors) == 0 || descriptors == nil {
+		descriptors = []ocispec.Descriptor{}
 	}
 	opt := pushOptsDefaults()
 	for _, o := range opts {
