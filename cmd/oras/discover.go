@@ -29,7 +29,6 @@ import (
 	"github.com/need-being/go-tree"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	artifactspec "github.com/oras-project/artifacts-spec/specs-go/v1"
 	"github.com/spf13/cobra"
 )
 
@@ -115,9 +114,9 @@ func runDiscover(opts discoverOptions) error {
 	return nil
 }
 
-func fetchReferrers(ctx context.Context, repo *remote.Repository, desc ocispec.Descriptor, artifactType string) ([]artifactspec.Descriptor, error) {
-	var results []artifactspec.Descriptor
-	err := repo.Referrers(ctx, desc, artifactType, func(referrers []artifactspec.Descriptor) error {
+func fetchReferrers(ctx context.Context, repo *remote.Repository, desc ocispec.Descriptor, artifactType string) ([]ocispec.Descriptor, error) {
+	var results []ocispec.Descriptor
+	err := repo.Referrers(ctx, desc, artifactType, func(referrers []ocispec.Descriptor) error {
 		results = append(results, referrers...)
 		return nil
 	})
@@ -136,13 +135,14 @@ func fetchAllReferrers(ctx context.Context, repo *remote.Repository, desc ocispe
 	for _, r := range results {
 		// Find all indirect referrers
 		referrerNode := node.AddPath(r.ArtifactType, r.Digest)
+		if len(r.Annotations) > 0 {
+			for key, element := range r.Annotations {
+				referrerNode.AddPath(fmt.Sprintf("%s=%s", key, element))
+			}
+		}
 		err := fetchAllReferrers(
 			ctx, repo,
-			ocispec.Descriptor{
-				Digest:    r.Digest,
-				Size:      r.Size,
-				MediaType: r.MediaType,
-			},
+			r,
 			artifactType, referrerNode)
 		if err != nil {
 			return err
@@ -151,7 +151,7 @@ func fetchAllReferrers(ctx context.Context, repo *remote.Repository, desc ocispe
 	return nil
 }
 
-func printDiscoveredReferrersTable(refs []artifactspec.Descriptor, verbose bool) {
+func printDiscoveredReferrersTable(refs []ocispec.Descriptor, verbose bool) {
 	typeNameTitle := "Artifact Type"
 	typeNameLength := len(typeNameTitle)
 	for _, ref := range refs {
@@ -175,12 +175,13 @@ func printDiscoveredReferrersTable(refs []artifactspec.Descriptor, verbose bool)
 
 // printDiscoveredReferrersJSON prints referrer list in JSON equivalent to the
 // API result: https://github.com/oras-project/artifacts-spec/blob/v1.0.0-rc.1/manifest-referrers-api.md#artifact-referrers-api-results
-func printDiscoveredReferrersJSON(desc ocispec.Descriptor, refs []artifactspec.Descriptor) error {
+func printDiscoveredReferrersJSON(desc ocispec.Descriptor, refs []ocispec.Descriptor) error {
 	type referrerDesc struct {
-		Digest    digest.Digest `json:"digest"`
-		MediaType string        `json:"mediaType"`
-		Artifact  string        `json:"artifactType"`
-		Size      int64         `json:"size"`
+		Digest      digest.Digest     `json:"digest"`
+		MediaType   string            `json:"mediaType"`
+		Artifact    string            `json:"artifactType"`
+		Size        int64             `json:"size"`
+		Annotations map[string]string `json:"annotations,omitempty"`
 	}
 	output := struct {
 		Referrers []referrerDesc `json:"referrers"`
@@ -190,10 +191,11 @@ func printDiscoveredReferrersJSON(desc ocispec.Descriptor, refs []artifactspec.D
 
 	for i, ref := range refs {
 		output.Referrers[i] = referrerDesc{
-			Digest:    ref.Digest,
-			Artifact:  ref.ArtifactType,
-			Size:      ref.Size,
-			MediaType: ref.MediaType,
+			Digest:      ref.Digest,
+			Artifact:    ref.ArtifactType,
+			Size:        ref.Size,
+			MediaType:   ref.MediaType,
+			Annotations: ref.Annotations,
 		}
 	}
 

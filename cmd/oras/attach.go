@@ -22,7 +22,6 @@ import (
 	"sync"
 
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-	artifactspec "github.com/oras-project/artifacts-spec/specs-go/v1"
 	"github.com/spf13/cobra"
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/content"
@@ -110,19 +109,20 @@ func runAttach(opts attachOptions) error {
 	if err != nil {
 		return err
 	}
-	subject := ociToArtifact(ociSubject)
+	subject := ociSubject
 	ociDescs, err := loadFiles(ctx, store, annotations, opts.FileRefs, opts.Verbose)
 	if err != nil {
 		return err
 	}
-	orasDescs := make([]artifactspec.Descriptor, len(ociDescs))
+	orasDescs := make([]ocispec.Descriptor, len(ociDescs))
 	for i := range ociDescs {
-		orasDescs[i] = ociToArtifact(ociDescs[i])
+		orasDescs[i] = ociDescs[i]
 	}
 	desc, err := oras.PackArtifact(
-		ctx, store, opts.artifactType, orasDescs,
+		ctx, store, opts.artifactType, ociDescs,
 		oras.PackArtifactOptions{
-			Subject: &subject,
+			Subject:             &subject,
+			ManifestAnnotations: annotations[option.AnnotationManifest],
 		})
 	if err != nil {
 		return err
@@ -166,15 +166,4 @@ func runAttach(opts attachOptions) error {
 
 func isEqualOCIDescriptor(a, b ocispec.Descriptor) bool {
 	return a.Size == b.Size && a.Digest == b.Digest && a.MediaType == b.MediaType
-}
-
-// ociToArtifact converts OCI descriptor to artifact descriptor.
-func ociToArtifact(desc ocispec.Descriptor) artifactspec.Descriptor {
-	return artifactspec.Descriptor{
-		MediaType:   desc.MediaType,
-		Digest:      desc.Digest,
-		Size:        desc.Size,
-		URLs:        desc.URLs,
-		Annotations: desc.Annotations,
-	}
 }
