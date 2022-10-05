@@ -26,6 +26,4 @@ require (
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 )
 
-// replace oras.land/oras-go/v2 => github.com/oci-playground/oras-go/v2 v2.0.0-20220926225106-2bb6a814d398
-
-replace oras.land/oras-go/v2 => ../oras-go/
+replace oras.land/oras-go/v2 => github.com/sajayantony/oras-go/v2 v2.0.0-20221003232253-d0cec718c0f9
