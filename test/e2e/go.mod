@@ -1,6 +1,6 @@
 module oras.land/oras/test/e2e
 
-go 1.25.7
+go 1.26.0
 
 require (
 	github.com/onsi/ginkgo/v2 v2.29.0
@@ -8,7 +8,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
-	oras.land/oras-go/v2 v2.6.0
+	oras.land/oras-go/v2 v2.6.4
 )
 
 require (
@@ -21,7 +21,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
